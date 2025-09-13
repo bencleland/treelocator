@@ -26,19 +26,30 @@ function syncToGoogleSheet(marker){
  .catch(e=>{console.error("⚠️ Sync failed:",e);showToast("⚠️ Failed to sync",true);});
 }
 
+// ---- Load Pins from Google Sheet ----
+function loadPinsFromGoogleSheet(){
+ fetch(SCRIPT_URL).then(r=>r.json()).then(rows=>{
+   rows.forEach(r=>{
+     var m=L.marker([r.lat,r.lng],{icon:treeIcon}).addTo(map);
+     m.bindPopup(`<b>Type:</b> ${r.type}<br><b>Name:</b> ${r.name}<br><b>Tree #:</b> ${r.tree}<br><b>Notes:</b> ${r.notes}<br><small>Updated: ${r.updatedAt}</small>`);
+   });
+ }).catch(e=>{console.error("⚠️ Failed to load pins:",e);showToast("⚠️ Failed to load saved pins",true);});
+}
+
 // ---- Drop Pin ----
 map.on("click",function(e){if(!dropMode)return;document.getElementById("dropMsg").style.display="none";dropMode=false;
  var m=L.marker(e.latlng,{icon:treeIcon}).addTo(map);
  var popup=document.createElement("div");
- popup.innerHTML=`<label>Name: <input id="nameInput"></label><br><label>Tree #: <input id="treeInput"></label><br><label>Notes: <input id="notesInput"></label><br><button id="saveBtn">Save</button><button id="deleteBtn">Delete</button>`;
+ popup.innerHTML=`<label>Type: <input id="typeInput" required></label><br><label>Name: <input id="nameInput"></label><br><label>Tree #: <input id="treeInput"></label><br><label>Notes: <input id="notesInput"></label><br><button id="saveBtn">Save</button><button id="deleteBtn">Delete</button>`;
  m.bindPopup(popup).openPopup();
  popup.querySelector("#saveBtn").onclick=function(){
+   var type=popup.querySelector("#typeInput").value;
    var name=popup.querySelector("#nameInput").value;
    var tree=popup.querySelector("#treeInput").value;
    var notes=popup.querySelector("#notesInput").value;
-   if(!name||!tree){showToast("Name & Tree # required",true);return;}
-   var data={name,tree,notes,lat:e.latlng.lat,lng:e.latlng.lng,updatedAt:new Date().toISOString()};
-   m.setPopupContent(`<b>${name}</b><br>Tree #: ${tree}<br>Notes: ${notes}<br><small>Updated: ${data.updatedAt}</small><br><button id="delBtn">Delete</button>`);
+   if(!type||!name||!tree){showToast("Type, Name & Tree # required",true);return;}
+   var data={type,name,tree,notes,lat:e.latlng.lat,lng:e.latlng.lng,updatedAt:new Date().toISOString()};
+   m.setPopupContent(`<b>Type:</b> ${type}<br><b>${name}</b><br>Tree #: ${tree}<br>Notes: ${notes}<br><small>Updated: ${data.updatedAt}</small><br><button id="delBtn">Delete</button>`);
    markers.push(data); syncToGoogleSheet(data); showToast("✅ Pin saved");
    m.getPopup().on("add",()=>{document.getElementById("delBtn").onclick=function(){map.removeLayer(m);markers=markers.filter(x=>x.lat!==data.lat||x.lng!==data.lng);showToast("🗑️ Marker deleted");};});
  };
@@ -65,3 +76,6 @@ var PinControl=L.Control.extend({
   }
 });
 map.addControl(new PinControl({position:"topleft"}));
+
+// ---- Load existing pins at startup ----
+loadPinsFromGoogleSheet();
