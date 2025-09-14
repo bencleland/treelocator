@@ -29,6 +29,7 @@ function syncToGoogleSheet(marker){
 // ---- Load Pins from Google Sheet ----
 function loadPinsFromGoogleSheet(){
  fetch(SCRIPT_URL).then(r=>r.json()).then(rows=>{
+   console.log("Loaded rows:", rows);
    rows.forEach(r=>{
      var m=L.marker([r.lat,r.lng],{icon:treeIcon}).addTo(map);
      m.bindPopup(`<b>Type:</b> ${r.type}<br><b>Name:</b> ${r.name}<br><b>Tree #:</b> ${r.tree}<br><b>Notes:</b> ${r.notes}<br><small>Updated: ${r.updatedAt}</small>`);
