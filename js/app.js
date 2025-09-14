@@ -19,7 +19,7 @@ var markers = []; var dropMode=false;
 function showToast(msg,error=false){let t=document.createElement("div");t.textContent=msg;t.style.position="fixed";t.style.bottom="20px";t.style.left="50%";t.style.transform="translateX(-50%)";t.style.background=error?"#c00":"#333";t.style.color="#fff";t.style.padding="10px 16px";t.style.borderRadius="6px";t.style.zIndex=9999;document.body.appendChild(t);setTimeout(()=>t.remove(),3000);}
 
 // ---- Netlify Sync ----
-const SCRIPT_URL="/.netlify/functions/sync";
+const SCRIPT_URL="https://treelocator.netlify.app/.netlify/functions/sync";
 function syncToGoogleSheet(marker){
  fetch(SCRIPT_URL,{method:"POST",body:JSON.stringify(marker),headers:{"Content-Type":"application/json"}})
  .then(r=>r.json()).then(d=>{console.log("✅ Synced:",d);showToast("✅ Pin saved to Google Sheet");})
