@@ -18,23 +18,25 @@ var markers = []; var dropMode=false;
 // ---- Toast ----
 function showToast(msg,error=false){let t=document.createElement("div");t.textContent=msg;t.style.position="fixed";t.style.bottom="20px";t.style.left="50%";t.style.transform="translateX(-50%)";t.style.background=error?"#c00":"#333";t.style.color="#fff";t.style.padding="10px 16px";t.style.borderRadius="6px";t.style.zIndex=9999;document.body.appendChild(t);setTimeout(()=>t.remove(),3000);}
 
+// ---- LocalStorage ----
+function saveToLocalStorage(){ localStorage.setItem("pins", JSON.stringify(markers)); }
+function loadFromLocalStorage(){
+ let saved = localStorage.getItem("pins");
+ if(saved){
+   JSON.parse(saved).forEach(r=>{
+     var m=L.marker([r.lat,r.lng],{icon:treeIcon}).addTo(map);
+     m.bindPopup(`<b>Type:</b> ${r.type}<br><b>Name:</b> ${r.name}<br><b>Tree #:</b> ${r.tree}<br><b>Notes:</b> ${r.notes}<br><small>Updated: ${r.updatedAt}</small>`);
+   });
+   showToast("📦 Loaded pins from device storage");
+ }
+}
+
 // ---- Netlify Sync ----
 const SCRIPT_URL="https://treelocator.netlify.app/.netlify/functions/sync";
 function syncToGoogleSheet(marker){
  fetch(SCRIPT_URL,{method:"POST",body:JSON.stringify(marker),headers:{"Content-Type":"application/json"}})
  .then(r=>r.json()).then(d=>{console.log("✅ Synced:",d);showToast("✅ Pin saved to Google Sheet");})
  .catch(e=>{console.error("⚠️ Sync failed:",e);showToast("⚠️ Failed to sync",true);});
-}
-
-// ---- Load Pins from Google Sheet ----
-function loadPinsFromGoogleSheet(){
- fetch(SCRIPT_URL).then(r=>r.json()).then(rows=>{
-   console.log("Loaded rows:", rows);
-   rows.forEach(r=>{
-     var m=L.marker([r.lat,r.lng],{icon:treeIcon}).addTo(map);
-     m.bindPopup(`<b>Type:</b> ${r.type}<br><b>Name:</b> ${r.name}<br><b>Tree #:</b> ${r.tree}<br><b>Notes:</b> ${r.notes}<br><small>Updated: ${r.updatedAt}</small>`);
-   });
- }).catch(e=>{console.error("⚠️ Failed to load pins:",e);showToast("⚠️ Failed to load saved pins",true);});
 }
 
 // ---- Drop Pin ----
@@ -51,14 +53,17 @@ map.on("click",function(e){if(!dropMode)return;document.getElementById("dropMsg"
    if(!type||!name||!tree){showToast("Type, Name & Tree # required",true);return;}
    var data={type,name,tree,notes,lat:e.latlng.lat,lng:e.latlng.lng,updatedAt:new Date().toISOString()};
    m.setPopupContent(`<b>Type:</b> ${type}<br><b>${name}</b><br>Tree #: ${tree}<br>Notes: ${notes}<br><small>Updated: ${data.updatedAt}</small><br><button id="delBtn">Delete</button>`);
-   markers.push(data); syncToGoogleSheet(data); showToast("✅ Pin saved");
-   m.getPopup().on("add",()=>{document.getElementById("delBtn").onclick=function(){map.removeLayer(m);markers=markers.filter(x=>x.lat!==data.lat||x.lng!==data.lng);showToast("🗑️ Marker deleted");};});
+   markers.push(data);
+   saveToLocalStorage(); // local persist
+   syncToGoogleSheet(data); // try sheet sync
+   showToast("✅ Pin saved");
+   m.getPopup().on("add",()=>{document.getElementById("delBtn").onclick=function(){map.removeLayer(m);markers=markers.filter(x=>x.lat!==data.lat||x.lng!==data.lng);saveToLocalStorage();showToast("🗑️ Marker deleted");};});
  };
  popup.querySelector("#deleteBtn").onclick=function(){map.removeLayer(m);};
 });
 
 // ---- Controls ----
-document.getElementById("clearBtn").onclick=()=>{if(confirm("Clear all markers?")){markers.forEach(m=>map.removeLayer(m));markers=[];showToast("🗑️ All markers cleared");}};
+document.getElementById("clearBtn").onclick=()=>{if(confirm("Clear all markers?")){markers.forEach(m=>map.removeLayer(m));markers=[];saveToLocalStorage();showToast("🗑️ All markers cleared");}};
 document.getElementById("locateBtn").onclick=()=>{if(navigator.geolocation){navigator.geolocation.getCurrentPosition(pos=>{map.setView([pos.coords.latitude,pos.coords.longitude],15);showToast("📍 Moved to your location");},()=>showToast("⚠️ Location access denied",true));}else showToast("⚠️ Geolocation not supported",true);};
 
 // ---- Pin Control ----
@@ -78,5 +83,5 @@ var PinControl=L.Control.extend({
 });
 map.addControl(new PinControl({position:"topleft"}));
 
-// ---- Load existing pins at startup ----
-loadPinsFromGoogleSheet();
+// ---- Load pins ----
+loadFromLocalStorage();
