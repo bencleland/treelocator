@@ -1,11 +1,15 @@
-let map = L.map('map').setView([39.5, -98.35], 4);
+let map = L.map('map', {
+  center: [39.5, -98.35],
+  zoom: 4,
+  zoomControl: true
+});
 
-// Add tile layer (ESRI satellite for visual clarity)
+// Add ESRI satellite imagery
 L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
   attribution: 'Tiles © Esri'
 }).addTo(map);
 
-// Custom icon
+// Custom icon (green pin with yellow outline)
 const treeIcon = L.icon({
   iconUrl: 'images/tree-pin.png',
   iconSize: [30, 40],
