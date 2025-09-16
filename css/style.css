@@ -1,22 +1,11 @@
-body, html {margin:0;padding:0;height:100%;width:100%;font-family:Arial,sans-serif;}
+body { margin:0; padding:0; font-family:sans-serif; }
 #toolbar {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
+  top: 0; left: 0; right: 0;
   z-index: 1000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  background: #f4f4f4;
-  padding: 8px;
+  display: flex; gap: 8px; flex-wrap: wrap;
+  align-items: center; justify-content: center;
+  background: #f4f4f4; padding: 8px;
   box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-  flex-wrap: wrap;
 }
-#toolbar input {padding:6px;font-size:14px;width:220px;}
-#toolbar button {padding:6px 10px;font-size:14px;border:none;border-radius:4px;background:#2a6;color:white;cursor:pointer;}
-#toolbar button:hover {background:#184;}
-#map {width:100%;height:100vh;margin-top:60px;}
-#dropMsg {position:absolute;top:70px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:6px 12px;border-radius:4px;z-index:1000;}
-.leaflet-control-custom {background:white;width:30px;height:30px;line-height:30px;text-align:center;font-size:18px;cursor:pointer;}
+#map { height: 100vh; width: 100%; margin-top: 60px; }
